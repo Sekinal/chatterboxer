@@ -28,7 +28,7 @@ class ChatWindow(QMainWindow):
         self.ai_input = QLineEdit()
         self.add_user_button = QPushButton("Add User Response")
         self.add_ai_button = QPushButton("Add Assistant Response")
-        self.new_conversation_button = QPushButton("Save Conversation (& create a new one))")
+        self.new_conversation_button = QPushButton("Save Conversation (and create a new one))")
         self.save_all_button = QPushButton("Save All Conversations (USE ONLY AFTER SAVING)")
         
         # Layout (Example)
@@ -58,7 +58,7 @@ class ChatWindow(QMainWindow):
         Returns:
             int: The next available conversation ID.
         """
-        conversation_files = [f for f in self.save_dir.iterdir() if f.suffix == ".parquet"] 
+        conversation_files = [f for f in (self.save_dir/"individual_conversations").iterdir() if f.suffix == ".parquet"] 
 
         if conversation_files:
             highest_num = max(
@@ -80,6 +80,7 @@ class ChatWindow(QMainWindow):
             "from": "human",
             "value": user_message
         }
+        print(self.conv_id)
         self.conversation.append(response_dict)
         self.update_conversation_display()
         self.user_input.clear()
@@ -114,6 +115,7 @@ class ChatWindow(QMainWindow):
 
     def save_conversation(self) -> None:
         convo_df = pl.DataFrame({"conversation": [self.conversation]})
+        
         save_file = self.save_dir / f"individual_conversations/conversation_{self.conv_id}.parquet"
         convo_df.write_parquet(save_file)
         self.conv_id += 1
