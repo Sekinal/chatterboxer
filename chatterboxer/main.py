@@ -10,7 +10,8 @@ class ChatWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("ChatterBoxer")
         self.conversation = [{"from": "system", "value": ""}]
-        self.save_dir = Path("save_data/conversation")  # Create a Path object
+        self.save_dir = Path("save_data")  # Create a Path object
+        self.save_dir.mkdir(parents=True, exist_ok=True)  # Create if necessary
         self.conv_id = self.initialize_conv_id()  # Initialize conv_id here
 
         # UI Elements
@@ -88,7 +89,7 @@ class ChatWindow(QMainWindow):
 
     def save_conversation(self):
         convo_df = pl.DataFrame({"conversation": [self.conversation]})
-        save_file = self.save_dir / f"conversation_{self.conv_id}.parquet"
+        save_file = self.save_dir / f"individual_conversations/conversation_{self.conv_id}.parquet"
         convo_df.write_parquet(save_file)
         self.conv_id += 1
     
@@ -99,13 +100,13 @@ class ChatWindow(QMainWindow):
     
     def save_all(self):
         convo_df = pl.DataFrame()
-        for conversation_file in self.save_dir.iterdir():
+        for conversation_file in (self.save_dir/"individual_conversations").iterdir():
             if conversation_file.suffix == '.parquet': 
                 convo_tmp_df = pl.read_parquet(conversation_file)
                 convo_df = pl.concat([convo_df, convo_tmp_df])
 
         convo_df = convo_df.rename({"conversation":"conversations"})
-        save_file = self.save_dir / "conversations.parquet"
+        save_file = self.save_dir / "conversations/conversations.parquet"
         convo_df.write_parquet(save_file)
 
 if __name__ == "__main__":
