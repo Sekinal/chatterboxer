@@ -1,5 +1,5 @@
 import sys
-import os
+from pathlib import Path
 import markdown
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                                   QTextEdit, QLineEdit, QPushButton)
@@ -10,6 +10,7 @@ class ChatWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("ChatterBoxer")
         self.conversation = [{"from": "system", "value": ""}]
+        self.save_dir = Path("save_data/conversation")  # Create a Path object
         self.conv_id = self.initialize_conv_id()  # Initialize conv_id here
 
         # UI Elements
@@ -43,18 +44,15 @@ class ChatWindow(QMainWindow):
         self.save_all_button.clicked.connect(self.save_all)
 
     def initialize_conv_id(self):
-        conversation_files = [
-            f for f in os.listdir("save_data/conversation") 
-            if f.endswith(".parquet")
-        ]
+        conversation_files = [f for f in self.save_dir.iterdir() if f.suffix == ".parquet"] 
 
         if conversation_files:
             highest_num = max(
-                int(f.split("_")[1].split(".")[0]) for f in conversation_files
+                int(f.stem.split("_")[1]) for f in conversation_files  # Use .stem
             )
             return highest_num + 1
         else:
-            return 0  # Start from 0 if no files exist
+            return 0
     
     def add_user_response(self):
         user_message = self.user_input.text()
@@ -90,7 +88,8 @@ class ChatWindow(QMainWindow):
 
     def save_conversation(self):
         convo_df = pl.DataFrame({"conversation": [self.conversation]})
-        convo_df.write_parquet(f"save_data/conversation/conversation_{self.conv_id}.parquet")
+        save_file = self.save_dir / f"conversation_{self.conv_id}.parquet"
+        convo_df.write_parquet(save_file)
         self.conv_id += 1
     
     def new_conversation(self):
@@ -100,12 +99,14 @@ class ChatWindow(QMainWindow):
     
     def save_all(self):
         convo_df = pl.DataFrame()
-        for conversation in os.listdir("save_data/conversation"):
-            convo_tmp_df = pl.read_parquet(f"save_data/conversation/{conversation}")
-            convo_df = pl.concat([convo_df, convo_tmp_df])
-        
+        for conversation_file in self.save_dir.iterdir():
+            if conversation_file.suffix == '.parquet': 
+                convo_tmp_df = pl.read_parquet(conversation_file)
+                convo_df = pl.concat([convo_df, convo_tmp_df])
+
         convo_df = convo_df.rename({"conversation":"conversations"})
-        convo_df.write_parquet("save_data/conversations/conversations.parquet")
+        save_file = self.save_dir / "conversations.parquet"
+        convo_df.write_parquet(save_file)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
