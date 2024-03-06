@@ -10,7 +10,7 @@ class ChatWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("ChatterBoxer")
         self.conversation = [{"from": "system", "value": ""}]
-        self.conv_id = 0
+        self.conv_id = self.initialize_conv_id()  # Initialize conv_id here
 
         # UI Elements
         self.conversation_display = QTextEdit()
@@ -42,6 +42,20 @@ class ChatWindow(QMainWindow):
         self.new_conversation_button.clicked.connect(self.new_conversation)
         self.save_all_button.clicked.connect(self.save_all)
 
+    def initialize_conv_id(self):
+        conversation_files = [
+            f for f in os.listdir("save_data/conversation") 
+            if f.endswith(".parquet")
+        ]
+
+        if conversation_files:
+            highest_num = max(
+                int(f.split("_")[1].split(".")[0]) for f in conversation_files
+            )
+            return highest_num + 1
+        else:
+            return 0  # Start from 0 if no files exist
+    
     def add_user_response(self):
         user_message = self.user_input.text()
         response_dict = {
@@ -87,12 +101,11 @@ class ChatWindow(QMainWindow):
     def save_all(self):
         convo_df = pl.DataFrame()
         for conversation in os.listdir("save_data/conversation"):
-            print(conversation)
             convo_tmp_df = pl.read_parquet(f"save_data/conversation/{conversation}")
             convo_df = pl.concat([convo_df, convo_tmp_df])
         
-        convo_df.write_parquet(f"save_data/conversations/conversations.parquet")
-        print(convo_df)
+        convo_df = convo_df.rename({"conversation":"conversations"})
+        convo_df.write_parquet("save_data/conversations/conversations.parquet")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
