@@ -6,7 +6,14 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
 import polars as pl
 
 class ChatWindow(QMainWindow):
+    """
+    Represents the main chat interface of the ChatterBoxer application.
+    """
+    
     def __init__(self):
+        """
+        Initializes the chat window, sets up UI elements, and loads conversation data.
+        """
         super().__init__()
         self.setWindowTitle("ChatterBoxer")
         self.conversation = [{"from": "system", "value": ""}]
@@ -44,7 +51,13 @@ class ChatWindow(QMainWindow):
         self.new_conversation_button.clicked.connect(self.new_conversation)
         self.save_all_button.clicked.connect(self.save_all)
 
-    def initialize_conv_id(self):
+    def initialize_conv_id(self) -> int:
+        """
+        Determines the next available conversation ID.
+
+        Returns:
+            int: The next available conversation ID.
+        """
         conversation_files = [f for f in self.save_dir.iterdir() if f.suffix == ".parquet"] 
 
         if conversation_files:
@@ -55,7 +68,13 @@ class ChatWindow(QMainWindow):
         else:
             return 0
     
-    def add_user_response(self):
+    def add_user_response(self, user_message: str) -> None:
+        """
+        Adds a user message to the conversation history and updates the display.
+
+        Args:
+            user_message (str): The message entered by the user.
+        """
         user_message = self.user_input.text()
         response_dict = {
             "from": "human",
@@ -65,7 +84,13 @@ class ChatWindow(QMainWindow):
         self.update_conversation_display()
         self.user_input.clear()
 
-    def add_assistant_response(self):
+    def add_assistant_response(self) -> None:
+        """
+        Adds an assistant message to the conversation history and updates the display.
+
+        Args:
+            user_message (str): The message entered by the assistant.
+        """
         assistant_message = self.ai_input.text()
         response_dict = {
             "from": "gpt",
@@ -75,7 +100,7 @@ class ChatWindow(QMainWindow):
         self.update_conversation_display()
         self.ai_input.clear()
 
-    def update_conversation_display(self):
+    def update_conversation_display(self) -> Nonw:
         self.conversation_display.clear()
         for message in self.conversation:
                 html_message = markdown.markdown(message["value"], extensions=['extra', 'codehilite']) 
@@ -87,18 +112,19 @@ class ChatWindow(QMainWindow):
                 html_message = f"<style>{style}</style>{html_message}"
                 self.conversation_display.append(f"{message['from']}: {html_message}")
 
-    def save_conversation(self):
+    def save_conversation(self) -> None:
         convo_df = pl.DataFrame({"conversation": [self.conversation]})
         save_file = self.save_dir / f"individual_conversations/conversation_{self.conv_id}.parquet"
         convo_df.write_parquet(save_file)
         self.conv_id += 1
     
-    def new_conversation(self):
+    def new_conversation(self) -> None:
         self.save_conversation()
         self.conversation = [{"from": "system", "value": ""}]
         self.conversation_display.clear()
     
-    def save_all(self):
+    def save_all(self) -> None:
+        """Saves all conversation data to a file."""
         convo_df = pl.DataFrame()
         for conversation_file in (self.save_dir/"individual_conversations").iterdir():
             if conversation_file.suffix == '.parquet': 
