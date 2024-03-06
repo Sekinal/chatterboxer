@@ -100,7 +100,7 @@ class ChatWindow(QMainWindow):
         self.update_conversation_display()
         self.ai_input.clear()
 
-    def update_conversation_display(self) -> Nonw:
+    def update_conversation_display(self) -> None:
         self.conversation_display.clear()
         for message in self.conversation:
                 html_message = markdown.markdown(message["value"], extensions=['extra', 'codehilite']) 
