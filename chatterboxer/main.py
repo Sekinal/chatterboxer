@@ -59,6 +59,10 @@ class ChatWindow(QMainWindow):
         Returns:
             int: The next available conversation ID.
         """
+        
+        indiv_dir = self.save_dir / Path("individual_conversations")  # Create a Path object
+        indiv_dir.mkdir(parents=True, exist_ok=True)  # Create if necessary
+        
         conversation_files = [f for f in (self.save_dir/"individual_conversations").iterdir() if f.suffix == ".parquet"] 
 
         if conversation_files:
@@ -135,9 +139,11 @@ class ChatWindow(QMainWindow):
                 convo_df = pl.concat([convo_df, convo_tmp_df])
 
         convo_df = convo_df.rename({"conversation":"conversations"})
-        save_file = self.save_dir / "conversations/conversations.parquet"
+        convos_dir = self.save_dir / Path("conversations")  # Create a Path object
+        convos_dir.mkdir(parents=True, exist_ok=True)  # Create if necessary
+        save_file = convos_dir / "conversations.parquet"
         con = duckdb.connect()
-        con.sql("SELECT * FROM convo_df").write_parquet("conversations.parquet")
+        con.sql("SELECT * FROM convo_df").write_parquet(str(save_file))
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
