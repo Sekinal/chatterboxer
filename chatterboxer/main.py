@@ -4,6 +4,7 @@ import markdown
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                                   QTextEdit, QLineEdit, QPushButton)
 import polars as pl
+import duckdb
 
 class ChatWindow(QMainWindow):
     """
@@ -135,7 +136,8 @@ class ChatWindow(QMainWindow):
 
         convo_df = convo_df.rename({"conversation":"conversations"})
         save_file = self.save_dir / "conversations/conversations.parquet"
-        convo_df.write_parquet(save_file)
+        con = duckdb.connect()
+        con.sql("SELECT * FROM convo_df").write_parquet("conversations.parquet")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
